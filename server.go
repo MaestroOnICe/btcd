@@ -36,6 +36,7 @@ import (
 	"github.com/btcsuite/btcd/mining/cpuminer"
 	"github.com/btcsuite/btcd/netsync"
 	"github.com/btcsuite/btcd/peer"
+	"github.com/btcsuite/btcd/scion"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/decred/dcrd/lru"
@@ -2576,39 +2577,46 @@ func (s *server) ScheduleShutdown(duration time.Duration) {
 func parseListeners(addrs []string) ([]net.Addr, error) {
 	netAddrs := make([]net.Addr, 0, len(addrs)*2)
 	for _, addr := range addrs {
-		host, _, err := net.SplitHostPort(addr)
-		if err != nil {
-			// Shouldn't happen due to already being normalized.
-			return nil, err
-		}
-
-		// Empty host or host of * on plan9 is both IPv4 and IPv6.
-		if host == "" || (host == "*" && runtime.GOOS == "plan9") {
-			netAddrs = append(netAddrs, simpleAddr{net: "tcp4", addr: addr})
-			netAddrs = append(netAddrs, simpleAddr{net: "tcp6", addr: addr})
-			continue
-		}
-
-		// Strip IPv6 zone id if present since net.ParseIP does not
-		// handle it.
-		zoneIndex := strings.LastIndex(host, "%")
-		if zoneIndex > 0 {
-			host = host[:zoneIndex]
-		}
-
-		// Parse the IP.
-		ip := net.ParseIP(host)
-		if ip == nil {
-			return nil, fmt.Errorf("'%s' is not a valid IP address", host)
-		}
-
-		// To4 returns nil when the IP is not an IPv4 address, so use
-		// this determine the address type.
-		if ip.To4() == nil {
-			netAddrs = append(netAddrs, simpleAddr{net: "tcp6", addr: addr})
+		// check for scion address
+		if scion.IsValidAddress(addr) {
+			btcdLog.Info("Scion listener address parsed:", addr)
+			netAddrs = append(netAddrs, simpleAddr{net: "scion", addr: addr})
 		} else {
-			netAddrs = append(netAddrs, simpleAddr{net: "tcp4", addr: addr})
+			host, _, err := net.SplitHostPort(addr)
+			if err != nil {
+				// Shouldn't happen due to already being normalized.
+				return nil, err
+			}
+
+			// Empty host or host of * on plan9 is both IPv4 and IPv6.
+			if host == "" || (host == "*" && runtime.GOOS == "plan9") {
+				netAddrs = append(netAddrs, simpleAddr{net: "tcp4", addr: addr})
+				netAddrs = append(netAddrs, simpleAddr{net: "tcp6", addr: addr})
+				continue
+			}
+
+			// Strip IPv6 zone id if present since net.ParseIP does not
+			// handle it.
+			zoneIndex := strings.LastIndex(host, "%")
+			if zoneIndex > 0 {
+				host = host[:zoneIndex]
+			}
+
+			// Parse the IP.
+			ip := net.ParseIP(host)
+			if ip == nil {
+				return nil, fmt.Errorf("'%s' is not a valid IP address", host)
+			}
+
+			// To4 returns nil when the IP is not an IPv4 address, so use
+			// this determine the address type.
+			if ip.To4() == nil {
+				netAddrs = append(netAddrs, simpleAddr{net: "tcp6", addr: addr})
+			} else {
+				netAddrs = append(netAddrs, simpleAddr{net: "tcp4", addr: addr})
+			}
 		}
+
 	}
 	return netAddrs, nil
 }
@@ -3070,12 +3078,22 @@ func initListeners(amgr *addrmgr.AddrManager, listenAddrs []string, services wir
 
 	listeners := make([]net.Listener, 0, len(netAddrs))
 	for _, addr := range netAddrs {
-		listener, err := net.Listen(addr.Network(), addr.String())
-		if err != nil {
-			srvrLog.Warnf("Can't listen on %s: %v", addr, err)
-			continue
+		if addr.Network() == "scion" {
+			listener, err := scion.Listen(addr.String())
+			if err != nil {
+				srvrLog.Warnf("Can't listen on %s: %v", addr, err)
+				continue
+			}
+			listeners = append(listeners, listener)
+		} else {
+			listener, err := net.Listen(addr.Network(), addr.String())
+			if err != nil {
+				srvrLog.Warnf("Can't listen on %s: %v", addr, err)
+				continue
+			}
+			listeners = append(listeners, listener)
 		}
-		listeners = append(listeners, listener)
+
 	}
 
 	var nat NAT
@@ -3141,6 +3159,15 @@ func initListeners(amgr *addrmgr.AddrManager, listenAddrs []string, services wir
 // to IP addresses.  It also handles tor addresses properly by returning a
 // net.Addr that encapsulates the address.
 func addrStringToNetAddr(addr string) (net.Addr, error) {
+	// if the address is a scion addres return compatible scionAddr
+	if scion.IsValidAddress(addr) {
+		//host, port, err := scion.SplitHostPort(addr)
+		sa, err := scion.ParseAddr(addr)
+		if err != nil {
+			return nil, err
+		}
+		return sa, nil
+	}
 	host, strPort, err := net.SplitHostPort(addr)
 	if err != nil {
 		return nil, err
@@ -3187,6 +3214,11 @@ func addrStringToNetAddr(addr string) (net.Addr, error) {
 // addLocalAddress adds an address that this node is listening on to the
 // address manager so that it may be relayed to peers.
 func addLocalAddress(addrMgr *addrmgr.AddrManager, addr string, services wire.ServiceFlag) error {
+	// as of now, we dont want to advertise our listening address
+	if scion.IsValidAddress(addr) {
+		return nil
+	}
+
 	host, portStr, err := net.SplitHostPort(addr)
 	if err != nil {
 		return err

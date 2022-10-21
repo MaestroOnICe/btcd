@@ -18,6 +18,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/sys v0.0.0-20210510120138-977fb7262007
+	inet.af/netaddr v0.0.0-20210903134321-85fa6c94624e
 )
 
 require (
@@ -75,7 +76,6 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	inet.af/netaddr v0.0.0-20210903134321-85fa6c94624e // indirect
 )
 
 replace github.com/btcsuite/btcd/btcutil => ./btcutil

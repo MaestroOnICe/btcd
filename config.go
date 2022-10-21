@@ -182,7 +182,8 @@ type config struct {
 	miningAddrs          []btcutil.Address
 	minRelayTxFee        btcutil.Amount
 	whitelists           []*net.IPNet
-	Scion                string `long:"scion" description:"Use the scion network architecture, provide <AS>,[<IP>]:Port"`
+	Scion                bool `long:"scion" description:"Use the scion network architecture"`
+	sciondial            func(string, string, time.Duration) (net.Conn, error)
 }
 
 // serviceOptions defines the configuration options for the daemon as a service on
@@ -317,11 +318,20 @@ func removeDuplicateAddresses(addrs []string) []string {
 // normalizeAddress returns addr with the passed default port appended if
 // there is not already a port specified.
 func normalizeAddress(addr, defaultPort string) string {
-	_, _, err := net.SplitHostPort(addr)
-	if err != nil {
-		return net.JoinHostPort(addr, defaultPort)
+	if scion.IsValidAddress(addr) {
+		//TODO add 8666 port, right now it just adds weird brackets around the address string
+		// _, _, err := scion.SplitHostPort(addr)
+		// if err != nil {
+		// 	return net.JoinHostPort(addr, "8666")
+		// }
+		return addr
+	} else {
+		_, _, err := net.SplitHostPort(addr)
+		if err != nil {
+			return net.JoinHostPort(addr, defaultPort)
+		}
+		return addr
 	}
-	return addr
 }
 
 // normalizeAddresses returns a new slice with all the passed peer addresses
@@ -1146,14 +1156,14 @@ func loadConfig() (*config, []string, error) {
 		btcdLog.Warnf("%v", configFileError)
 	}
 
-	// If a SCION Adress is specified use the SCION architecture to connect to the bootstrap node
-	if cfg.Scion != "" {
-		addr, err := scion.ParseAddr(cfg.Scion)
-		if err != nil {
-			fmt.Println("Scion address could not be parsed")
+	// Use the scion network architecture
+	// Specify dialer for the use of scion
+	if cfg.Scion {
+		cfg.sciondial = func(network string, address string, time time.Duration) (net.Conn, error) {
+			conn, err := scion.Dial(address)
+			return conn, err
 		}
-
-		fmt.Println("I am using Scion, with the following address", addr)
+		fmt.Println("I am using Scion")
 	}
 
 	return &cfg, remainingArgs, nil
@@ -1236,6 +1246,12 @@ func btcdDial(addr net.Addr) (net.Conn, error) {
 		return cfg.oniondial(addr.Network(), addr.String(),
 			defaultConnectTimeout)
 	}
+
+	// check wether the adresse is a scion adress if so return the scion/pan dialer
+	if scion.IsValidAddress(addr.String()) {
+		return cfg.sciondial(addr.Network(), addr.String(), defaultConnectTimeout)
+	}
+
 	return cfg.dial(addr.Network(), addr.String(), defaultConnectTimeout)
 }
 
