@@ -1732,7 +1732,7 @@ func (s *server) handleAddPeerMsg(state *peerState, sp *serverPeer) bool {
 	}
 
 	// Disconnect banned peers.
-	host, _, err := net.SplitHostPort(sp.Addr())
+	host, _, err := scion.SplitHostPort(sp.Addr())
 	if err != nil {
 		srvrLog.Debugf("can't split hostport %v", err)
 		sp.Disconnect()
@@ -1855,7 +1855,7 @@ func (s *server) handleDonePeerMsg(state *peerState, sp *serverPeer) {
 // handleBanPeerMsg deals with banning peers.  It is invoked from the
 // peerHandler goroutine.
 func (s *server) handleBanPeerMsg(state *peerState, sp *serverPeer) {
-	host, _, err := net.SplitHostPort(sp.Addr())
+	host, _, err := scion.SplitHostPort(sp.Addr())
 	if err != nil {
 		srvrLog.Debugf("can't split ban peer %s %v", sp.Addr(), err)
 		return
@@ -2578,11 +2578,11 @@ func parseListeners(addrs []string) ([]net.Addr, error) {
 	netAddrs := make([]net.Addr, 0, len(addrs)*2)
 	for _, addr := range addrs {
 		// check for scion address
-		if scion.IsValidAddress(addr) {
+		if _, ok := scion.IsValidAddress(addr); ok {
 			btcdLog.Info("Scion listener address parsed:", addr)
 			netAddrs = append(netAddrs, simpleAddr{net: "scion", addr: addr})
 		} else {
-			host, _, err := net.SplitHostPort(addr)
+			host, _, err := scion.SplitHostPort(addr)
 			if err != nil {
 				// Shouldn't happen due to already being normalized.
 				return nil, err
@@ -3107,7 +3107,7 @@ func initListeners(amgr *addrmgr.AddrManager, listenAddrs []string, services wir
 
 		for _, sip := range cfg.ExternalIPs {
 			eport := uint16(defaultPort)
-			host, portstr, err := net.SplitHostPort(sip)
+			host, portstr, err := scion.SplitHostPort(sip)
 			if err != nil {
 				// no port, use default.
 				host = sip
@@ -3160,7 +3160,7 @@ func initListeners(amgr *addrmgr.AddrManager, listenAddrs []string, services wir
 // net.Addr that encapsulates the address.
 func addrStringToNetAddr(addr string) (net.Addr, error) {
 	// if the address is a scion addres return compatible scionAddr
-	if scion.IsValidAddress(addr) {
+	if _, ok := scion.IsValidAddress(addr); ok {
 		//host, port, err := scion.SplitHostPort(addr)
 		sa, err := scion.ParseAddr(addr)
 		if err != nil {
@@ -3168,7 +3168,7 @@ func addrStringToNetAddr(addr string) (net.Addr, error) {
 		}
 		return sa, nil
 	}
-	host, strPort, err := net.SplitHostPort(addr)
+	host, strPort, err := scion.SplitHostPort(addr)
 	if err != nil {
 		return nil, err
 	}
@@ -3215,11 +3215,11 @@ func addrStringToNetAddr(addr string) (net.Addr, error) {
 // address manager so that it may be relayed to peers.
 func addLocalAddress(addrMgr *addrmgr.AddrManager, addr string, services wire.ServiceFlag) error {
 	// as of now, we dont want to advertise our listening address
-	if scion.IsValidAddress(addr) {
+	if _, ok := scion.IsValidAddress(addr); ok {
 		return nil
 	}
 
-	host, portStr, err := net.SplitHostPort(addr)
+	host, portStr, err := scion.SplitHostPort(addr)
 	if err != nil {
 		return err
 	}
@@ -3293,7 +3293,7 @@ func isWhitelisted(addr net.Addr) bool {
 		return false
 	}
 
-	host, _, err := net.SplitHostPort(addr.String())
+	host, _, err := scion.SplitHostPort(addr.String())
 	if err != nil {
 		srvrLog.Warnf("Unable to SplitHostPort on '%s': %v", addr, err)
 		return false

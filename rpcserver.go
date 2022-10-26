@@ -39,6 +39,7 @@ import (
 	"github.com/btcsuite/btcd/mining"
 	"github.com/btcsuite/btcd/mining/cpuminer"
 	"github.com/btcsuite/btcd/peer"
+	"github.com/btcsuite/btcd/scion"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/websocket"
@@ -411,7 +412,7 @@ func handleNode(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (inter
 		if nodeID, errN = strconv.ParseUint(c.Target, 10, 32); errN == nil {
 			err = s.cfg.ConnMgr.DisconnectByID(int32(nodeID))
 		} else {
-			if _, _, errP := net.SplitHostPort(c.Target); errP == nil || net.ParseIP(c.Target) != nil {
+			if _, _, errP := scion.SplitHostPort(c.Target); errP == nil || net.ParseIP(c.Target) != nil {
 				addr = normalizeAddress(c.Target, params.DefaultPort)
 				err = s.cfg.ConnMgr.DisconnectByAddr(addr)
 			} else {
@@ -436,7 +437,7 @@ func handleNode(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (inter
 		if nodeID, errN = strconv.ParseUint(c.Target, 10, 32); errN == nil {
 			err = s.cfg.ConnMgr.RemoveByID(int32(nodeID))
 		} else {
-			if _, _, errP := net.SplitHostPort(c.Target); errP == nil || net.ParseIP(c.Target) != nil {
+			if _, _, errP := scion.SplitHostPort(c.Target); errP == nil || net.ParseIP(c.Target) != nil {
 				addr = normalizeAddress(c.Target, params.DefaultPort)
 				err = s.cfg.ConnMgr.RemoveByAddr(addr)
 			} else {
@@ -984,7 +985,7 @@ func handleGetAddedNodeInfo(s *rpcServer, cmd interface{}, closeChan <-chan stru
 		// Split the address into host and port portions so we can do
 		// a DNS lookup against the host.  When no port is specified in
 		// the address, just use the address as the host.
-		host, _, err := net.SplitHostPort(peer.Addr())
+		host, _, err := scion.SplitHostPort(peer.Addr())
 		if err != nil {
 			host = peer.Addr()
 		}

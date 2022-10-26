@@ -13,6 +13,7 @@ import (
 	"io"
 	"math/rand"
 	"net"
+	"reflect"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -21,10 +22,12 @@ import (
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/scion"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/go-socks/socks"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/decred/dcrd/lru"
+	"github.com/netsec-ethz/scion-apps/pkg/pan"
 )
 
 const (
@@ -304,6 +307,12 @@ func minUint32(a, b uint32) uint32 {
 // net.Addr interface and create a bitcoin NetAddress structure using that
 // information.
 func newNetAddress(addr net.Addr, services wire.ServiceFlag) (*wire.NetAddress, error) {
+
+	fmt.Printf("SCION: newNetAddress %v %v\n", addr, reflect.TypeOf(addr))
+
+	// if scionAddr, ok := addr.(*pan.UDPAddr); ok {
+	// 	return &wire.
+	// }
 	// addr will be a net.TCPAddr when not using a proxy.
 	if tcpAddr, ok := addr.(*net.TCPAddr); ok {
 		ip := tcpAddr.IP
@@ -326,7 +335,7 @@ func newNetAddress(addr net.Addr, services wire.ServiceFlag) (*wire.NetAddress, 
 	// For the most part, addr should be one of the two above cases, but
 	// to be safe, fall back to trying to parse the information from the
 	// address string as a last resort.
-	host, portStr, err := net.SplitHostPort(addr.String())
+	host, portStr, err := scion.SplitHostPort(addr.String())
 	if err != nil {
 		return nil, err
 	}
@@ -1155,7 +1164,7 @@ func (p *Peer) isAllowedReadError(err error) bool {
 
 	// Don't allow the error if it's not coming from localhost or the
 	// hostname can't be determined for some reason.
-	host, _, err := net.SplitHostPort(p.addr)
+	host, _, err := scion.SplitHostPort(p.addr)
 	if err != nil {
 		return false
 	}
@@ -2095,7 +2104,7 @@ func (p *Peer) localVersionMsg() (*wire.MsgVersion, error) {
 	// we return an unroutable address as their address. This is to prevent
 	// leaking the tor proxy address.
 	if p.cfg.Proxy != "" {
-		proxyaddress, _, err := net.SplitHostPort(p.cfg.Proxy)
+		proxyaddress, _, err := scion.SplitHostPort(p.cfg.Proxy)
 		// invalid proxy means poorly configured, be on the safe side.
 		if err != nil || p.na.Addr.String() == proxyaddress {
 			theirNA = wire.NewNetAddressIPPort(net.IP([]byte{0, 0, 0, 0}), 0,
@@ -2330,21 +2339,31 @@ func (p *Peer) AssociateConnection(conn net.Conn) {
 	if p.inbound {
 		p.addr = p.conn.RemoteAddr().String()
 
-		// Set up a NetAddress for the peer to be used with AddrManager.  We
-		// only do this inbound because outbound set this up at connection time
-		// and no point recomputing.
-		na, err := newNetAddress(p.conn.RemoteAddr(), p.services)
-		if err != nil {
-			log.Errorf("Cannot create remote net address: %v", err)
-			p.Disconnect()
-			return
-		}
+		if sa, ok := p.conn.RemoteAddr().(pan.UDPAddr); ok {
+			p.na = &wire.NetAddressV2{
+				Timestamp: time.Now(),
+				Services:  p.services,
+				Addr:      sa,
+				Port:      sa.Port,
+			}
+		} else {
 
-		// Convert the NetAddress created above into NetAddressV2.
-		currentNa := wire.NetAddressV2FromBytes(
-			na.Timestamp, na.Services, na.IP, na.Port,
-		)
-		p.na = currentNa
+			// Set up a NetAddress for the peer to be used with AddrManager.  We
+			// only do this inbound because outbound set this up at connection time
+			// and no point recomputing.
+			na, err := newNetAddress(p.conn.RemoteAddr(), p.services)
+			if err != nil {
+				log.Errorf("Cannot create remote net address: %v", err)
+				p.Disconnect()
+				return
+			}
+
+			// Convert the NetAddress created above into NetAddressV2.
+			currentNa := wire.NetAddressV2FromBytes(
+				na.Timestamp, na.Services, na.IP, na.Port,
+			)
+			p.na = currentNa
+		}
 	}
 
 	go func() {
@@ -2418,7 +2437,17 @@ func NewOutboundPeer(cfg *Config, addr string) (*Peer, error) {
 	p := newPeerBase(cfg, false)
 	p.addr = addr
 
-	host, portStr, err := net.SplitHostPort(addr)
+	if sa, ok := scion.IsValidAddress(addr); ok {
+		p.na = &wire.NetAddressV2{
+			Timestamp: time.Now(),
+			Services:  0,
+			Addr:      sa,
+			Port:      sa.Port,
+		}
+		return p, nil
+	}
+
+	host, portStr, err := scion.SplitHostPort(addr)
 	if err != nil {
 		return nil, err
 	}

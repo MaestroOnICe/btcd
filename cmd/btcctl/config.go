@@ -14,8 +14,9 @@ import (
 	"strings"
 
 	"github.com/btcsuite/btcd/btcjson"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/scion"
 	flags "github.com/jessevdk/go-flags"
 )
 
@@ -115,7 +116,7 @@ type config struct {
 // normalizeAddress returns addr with the passed default port appended if
 // there is not already a port specified.
 func normalizeAddress(addr string, chain *chaincfg.Params, useWallet bool) (string, error) {
-	_, _, err := net.SplitHostPort(addr)
+	_, _, err := scion.SplitHostPort(addr)
 	if err != nil {
 		var defaultPort string
 		switch chain {
