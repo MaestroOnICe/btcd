@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/netsec-ethz/scion-apps/pkg/pan"
 	"github.com/netsec-ethz/scion-apps/pkg/quicutil"
@@ -40,7 +39,10 @@ var _ net.Addr = (*ScionAddr)(nil)
 // This is analogous to net.SplitHostPort, which however refuses to handle SCION addresses.
 // The address can be of the form of a SCION address (i.e. of the form "ISD-AS,[IP]:port") or in the form of "hostname:port".
 func SplitHostPort(hostport string) (host, port string, err error) {
-	return pan.SplitHostPort(hostport)
+	if _, ok := IsValidAddress(hostport); ok {
+		return pan.SplitHostPort(hostport)
+	}
+	return net.SplitHostPort(hostport)
 }
 
 // parse scion string into an ScionAddr with udp addresse and string address
@@ -118,11 +120,12 @@ func Dial(address string) (net.Conn, error) {
 	}
 	fmt.Printf("SCION: tls set %v\n", addr)
 	// Set Pinging Selector with active probing on two paths
-	selector := &pan.PingingSelector{
-		Interval: 2 * time.Second,
-		Timeout:  time.Second,
-	}
-	selector.SetActive(2)
+	// selector := &pan.PingingSelector{
+	// 	Interval: 2 * time.Second,
+	// 	Timeout:  time.Second,
+	// }
+	// selector.SetActive(2)
+	selector := pan.NewDefaultSelector()
 	fmt.Printf("SCION: selector set %v\n", addr)
 	session, err := pan.DialQUIC(context.Background(), netaddr.IPPort{}, addr, nil, selector, "", tlsCfg, nil)
 	if err != nil {

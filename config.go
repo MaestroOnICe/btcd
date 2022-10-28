@@ -182,7 +182,6 @@ type config struct {
 	miningAddrs          []btcutil.Address
 	minRelayTxFee        btcutil.Amount
 	whitelists           []*net.IPNet
-	Scion                bool `long:"scion" description:"Use the scion network architecture"`
 	sciondial            func(string, string, time.Duration) (net.Conn, error)
 }
 
@@ -1158,12 +1157,9 @@ func loadConfig() (*config, []string, error) {
 
 	// Use the scion network architecture
 	// Specify dialer for the use of scion
-	if cfg.Scion {
-		cfg.sciondial = func(network string, address string, time time.Duration) (net.Conn, error) {
-			conn, err := scion.Dial(address)
-			return conn, err
-		}
-		fmt.Println("I am using Scion")
+	cfg.sciondial = func(network string, address string, time time.Duration) (net.Conn, error) {
+		conn, err := scion.Dial(address)
+		return conn, err
 	}
 
 	return &cfg, remainingArgs, nil
