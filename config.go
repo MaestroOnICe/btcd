@@ -318,11 +318,11 @@ func removeDuplicateAddresses(addrs []string) []string {
 // there is not already a port specified.
 func normalizeAddress(addr, defaultPort string) string {
 	if _, ok := scion.IsValidAddress(addr); ok {
-		//TODO add 8666 port, right now it just adds weird brackets around the address string
-		// _, _, err := scion.SplitHostPort(addr)
-		// if err != nil {
-		// 	return net.JoinHostPort(addr, "8666")
-		// }
+		// add 8666 port, which is the scion port
+		_, _, err := scion.SplitHostPort(addr)
+		if err != nil {
+			return addr + ":" + "8666"
+		}
 		return addr
 	} else {
 		_, _, err := scion.SplitHostPort(addr)
