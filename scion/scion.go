@@ -48,8 +48,8 @@ func SplitHostPort(hostport string) (host, port string, err error) {
 // parse scion string into an ScionAddr with udp addresse and string address
 func ParseAddr(address string) (ScionAddr, error) {
 	saUDPAddress, err := pan.ResolveUDPAddr(address)
+	log.Debugf("Parsed: ", address, "into: ", saUDPAddress)
 	if err != nil {
-		log.Debugf("Parsed: ", address, "into: ", saUDPAddress)
 		return ScionAddr{}, errors.New("could not parse scion address")
 	}
 	sa := ScionAddr{
@@ -70,31 +70,31 @@ func IsValidAddress(address string) (pan.UDPAddr, bool) {
 // using quicutil from scion-apps
 // SingleStream implements an opaque, bi-directional data stream using QUIC, intending to be a drop-in replacement for TCP
 func Dial(address string) (net.Conn, error) {
-	log.Debugf("SCION: dialing to %v\n", address)
+	log.Debugf("dialing to: %v", address)
 
 	// Parse addr into a scionAddr
 	addr, err := pan.ResolveUDPAddr(address)
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("SCION: parsed %v\n", addr)
+	log.Debugf("parsed: %v", addr)
 
 	tlsCfg := &tls.Config{
 		InsecureSkipVerify: true,
 		NextProtos:         []string{"hello-quic"},
 	}
-	log.Debugf("SCION: tls set %v\n", tlsCfg)
+	log.Debugf("tls set: %v", tlsCfg)
 
 	// create default selector TODO: create specific selector
 	selector := pan.NewDefaultSelector()
-	log.Debugf("SCION: selector set %v\n", selector)
+	log.Debugf("selector set: %v", selector)
 
 	//dial
 	session, err := pan.DialQUIC(context.Background(), netaddr.IPPort{}, addr, nil, selector, "", tlsCfg, nil)
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("SCION: dialed to %v\n", session)
+	log.Debugf("dialed to: %v", session)
 
 	//return drop-in replacement stream
 	ss, err := quicutil.NewSingleStream(session)
@@ -109,23 +109,22 @@ func Dial(address string) (net.Conn, error) {
 // SingleStreamListener is a wrapper for a quic.Listener, returning SingleStream connections from Accept
 // This allows to use quic in contexts where a (TCP-)net.Listener is expected.
 func Listen(addr string) (net.Listener, error) {
-	log.Debugf("SCION: listening to %v\n", addr)
 	tlsCfg := &tls.Config{
 		Certificates: quicutil.MustGenerateSelfSignedCert(),
 		NextProtos:   []string{"hello-quic"},
 	}
-	log.Debugf("SCION: tls set %v\n", addr)
+	log.Debugf("tls set: %v", addr)
 
 	udpAddr, err := pan.ParseUDPAddr(addr)
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("SCION: parsed %v\n", addr)
+	log.Debugf("parsed: %v", addr)
 
 	quicListener, err := pan.ListenQUIC(context.Background(), netaddr.IPPortFrom(udpAddr.IP, udpAddr.Port), nil, tlsCfg, nil)
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("SCION: listened to %v\n", addr)
+	log.Debugf("listening to: %v", addr)
 	return quicutil.SingleStreamListener{Listener: quicListener}, nil
 }

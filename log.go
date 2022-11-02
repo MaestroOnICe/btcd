@@ -70,7 +70,7 @@ var (
 	srvrLog = backendLog.Logger("SRVR")
 	syncLog = backendLog.Logger("SYNC")
 	txmpLog = backendLog.Logger("TXMP")
-	scioLog = backendLog.Logger("SCIO")
+	scioLog = backendLog.Logger("SCIN")
 )
 
 // Initialize package-global logger variables.
@@ -106,7 +106,7 @@ var subsystemLoggers = map[string]btclog.Logger{
 	"SRVR": srvrLog,
 	"SYNC": syncLog,
 	"TXMP": txmpLog,
-	"SCIO": scioLog,
+	"SCIN": scioLog,
 }
 
 // initLogRotator initializes the logging rotater to write logs to logFile and
