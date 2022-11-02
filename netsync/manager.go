@@ -7,19 +7,19 @@ package netsync
 import (
 	"container/list"
 	"math/rand"
-	"net"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/btcsuite/btcd/blockchain"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/database"
 	"github.com/btcsuite/btcd/mempool"
 	peerpkg "github.com/btcsuite/btcd/peer"
+	"github.com/btcsuite/btcd/scion"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcd/btcutil"
 )
 
 const (
@@ -389,7 +389,7 @@ func (sm *SyncManager) isSyncCandidate(peer *peerpkg.Peer) bool {
 	if sm.chainParams == &chaincfg.RegressionNetParams {
 		// The peer is not a candidate if it's not coming from localhost
 		// or the hostname can't be determined for some reason.
-		host, _, err := net.SplitHostPort(peer.Addr())
+		host, _, err := scion.SplitHostPort(peer.Addr())
 		if err != nil {
 			return false
 		}

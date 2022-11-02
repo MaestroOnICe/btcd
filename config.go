@@ -182,7 +182,6 @@ type config struct {
 	miningAddrs          []btcutil.Address
 	minRelayTxFee        btcutil.Amount
 	whitelists           []*net.IPNet
-	Scion                bool `long:"scion" description:"Use the scion network architecture"`
 	sciondial            func(string, string, time.Duration) (net.Conn, error)
 }
 
@@ -318,7 +317,7 @@ func removeDuplicateAddresses(addrs []string) []string {
 // normalizeAddress returns addr with the passed default port appended if
 // there is not already a port specified.
 func normalizeAddress(addr, defaultPort string) string {
-	if scion.IsValidAddress(addr) {
+	if _, ok := scion.IsValidAddress(addr); ok {
 		//TODO add 8666 port, right now it just adds weird brackets around the address string
 		// _, _, err := scion.SplitHostPort(addr)
 		// if err != nil {
@@ -326,7 +325,7 @@ func normalizeAddress(addr, defaultPort string) string {
 		// }
 		return addr
 	} else {
-		_, _, err := net.SplitHostPort(addr)
+		_, _, err := scion.SplitHostPort(addr)
 		if err != nil {
 			return net.JoinHostPort(addr, defaultPort)
 		}
@@ -988,7 +987,7 @@ func loadConfig() (*config, []string, error) {
 			"::1":       {},
 		}
 		for _, addr := range cfg.RPCListeners {
-			host, _, err := net.SplitHostPort(addr)
+			host, _, err := scion.SplitHostPort(addr)
 			if err != nil {
 				str := "%s: RPC listen interface '%s' is " +
 					"invalid: %v"
@@ -1054,7 +1053,7 @@ func loadConfig() (*config, []string, error) {
 	cfg.dial = net.DialTimeout
 	cfg.lookup = net.LookupIP
 	if cfg.Proxy != "" {
-		_, _, err := net.SplitHostPort(cfg.Proxy)
+		_, _, err := scion.SplitHostPort(cfg.Proxy)
 		if err != nil {
 			str := "%s: Proxy address '%s' is invalid: %v"
 			err := fmt.Errorf(str, funcName, cfg.Proxy, err)
@@ -1100,7 +1099,7 @@ func loadConfig() (*config, []string, error) {
 	// normal dial function as selected above.  This allows .onion address
 	// traffic to be routed through a different proxy than normal traffic.
 	if cfg.OnionProxy != "" {
-		_, _, err := net.SplitHostPort(cfg.OnionProxy)
+		_, _, err := scion.SplitHostPort(cfg.OnionProxy)
 		if err != nil {
 			str := "%s: Onion proxy address '%s' is invalid: %v"
 			err := fmt.Errorf(str, funcName, cfg.OnionProxy, err)
@@ -1158,12 +1157,9 @@ func loadConfig() (*config, []string, error) {
 
 	// Use the scion network architecture
 	// Specify dialer for the use of scion
-	if cfg.Scion {
-		cfg.sciondial = func(network string, address string, time time.Duration) (net.Conn, error) {
-			conn, err := scion.Dial(address)
-			return conn, err
-		}
-		fmt.Println("I am using Scion")
+	cfg.sciondial = func(network string, address string, time time.Duration) (net.Conn, error) {
+		conn, err := scion.Dial(address)
+		return conn, err
 	}
 
 	return &cfg, remainingArgs, nil
@@ -1248,7 +1244,7 @@ func btcdDial(addr net.Addr) (net.Conn, error) {
 	}
 
 	// check wether the adresse is a scion adress if so return the scion/pan dialer
-	if scion.IsValidAddress(addr.String()) {
+	if _, ok := scion.IsValidAddress(addr.String()); ok {
 		return cfg.sciondial(addr.Network(), addr.String(), defaultConnectTimeout)
 	}
 

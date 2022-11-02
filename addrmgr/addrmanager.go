@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/scion"
 	"github.com/btcsuite/btcd/wire"
 )
 
@@ -552,7 +553,7 @@ func (a *AddrManager) deserializePeers(filePath string) error {
 func (a *AddrManager) DeserializeNetAddress(addr string,
 	services wire.ServiceFlag) (*wire.NetAddressV2, error) {
 
-	host, portStr, err := net.SplitHostPort(addr)
+	host, portStr, err := scion.SplitHostPort(addr)
 	if err != nil {
 		return nil, err
 	}
@@ -622,7 +623,7 @@ func (a *AddrManager) AddAddress(addr, srcAddr *wire.NetAddressV2) {
 // wire.NetAddress.
 func (a *AddrManager) AddAddressByIP(addrIP string) error {
 	// Split IP and port
-	addr, portStr, err := net.SplitHostPort(addrIP)
+	addr, portStr, err := scion.SplitHostPort(addrIP)
 	if err != nil {
 		return err
 	}

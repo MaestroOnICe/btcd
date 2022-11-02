@@ -19,6 +19,8 @@ import (
 	"net"
 	"os"
 	"time"
+
+	"github.com/btcsuite/btcd/scion"
 )
 
 // NewTLSCertPair returns a new PEM-encoded x.509 certificate pair
@@ -88,7 +90,7 @@ func NewTLSCertPair(organization string, validUntil time.Time, extraHosts []stri
 	}
 
 	for _, hostStr := range extraHosts {
-		host, _, err := net.SplitHostPort(hostStr)
+		host, _, err := scion.SplitHostPort(hostStr)
 		if err != nil {
 			host = hostStr
 		}
