@@ -81,7 +81,6 @@ require (
 replace (
 	github.com/btcsuite/btcd/btcutil => ./btcutil
 	github.com/scionproto/scion => github.com/netsec-ethz/scion v0.6.1-0.20220929101513-2408583f35d1
-
 )
 
 // The retract statements below fixes an accidental push of the tags of a btcd

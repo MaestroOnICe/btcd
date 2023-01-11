@@ -12,7 +12,7 @@ import (
 	"inet.af/netaddr"
 )
 
-// ScionAddr implements the net.Addr interface and represents a tor address.
+// ScionAddr implements the net.Addr interface
 type ScionAddr struct {
 	udpAddr pan.UDPAddr
 	addr    string
@@ -47,9 +47,8 @@ func SplitHostPort(hostport string) (host, port string, err error) {
 }
 
 // Wrapper for the function JoinHostPort
-// preserves the functionalty of the net.JoinHostPort function
-// TODO make code clean
-// TODO determine scion port behaviour
+// Preserves the functionalty of the net.JoinHostPort function
+// We decided, that scion runs on port 8666, if not otherwise specified
 func JoinHostPort(host, port string) string {
 	if _, ok := IsValidAddress(host); ok {
 		return host + ":8666"
@@ -72,38 +71,41 @@ func ParseAddr(address string) (ScionAddr, error) {
 }
 
 // naive way to check for a valid scion address
-// TODO: regex for checking
+// TODO: regex for checking, regex seems to thow erros, so for now we use this, which uses regex under the hood
 func IsValidAddress(address string) (pan.UDPAddr, bool) {
 	sa, err := pan.ParseUDPAddr(address)
 	return sa, err == nil
 }
 
 // return a connection for a scion
-// using quicutil from scion-appsd
+// using quicutil from scion-apps
 // SingleStream implements an opaque, bi-directional data stream using QUIC, intending to be a drop-in replacement for TCP
+// We use SingleStream because it is a working drop-in which requires no futher code changes
 func Dial(address string) (net.Conn, error) {
 	log.Debugf("dialing to: %v", address)
 
-	// Parse addr into a scionAddr
+	// parse addr into a scionAddr
 	addr, err := pan.ResolveUDPAddr(address)
 	if err != nil {
 		return nil, err
 	}
 	log.Debugf("parsed: %v", addr)
 
+	// default, as in examples
 	tlsCfg := &tls.Config{
 		InsecureSkipVerify: true,
 		NextProtos:         []string{"hello-quic"},
 	}
 	log.Debugf("tls set: %v", addr)
 
-	// create default selector TODO: create specific selector
-	//selector := pan.NewDefaultSelector()
-	// selector
+	// create pinging selector, which pings two paths
 	selector := &pan.PingingSelector{
+		// Interval for pinging. Must be positive.
 		Interval: 500 * time.Millisecond,
-		Timeout:  400 * time.Millisecond,
+		// Timeout for the individual pings. Must be positive and less than Interval.
+		Timeout: 400 * time.Millisecond,
 	}
+	// enables active pinging on at most numActive paths.
 	selector.SetActive(2)
 	log.Debugf("selector set: %v", addr)
 
@@ -126,20 +128,23 @@ func Dial(address string) (net.Conn, error) {
 // using quicutil from scion-apps
 // SingleStreamListener is a wrapper for a quic.Listener, returning SingleStream connections from Accept
 // This allows to use quic in contexts where a (TCP-)net.Listener is expected.
-func Listen(addr string) (net.Listener, error) {
+func Listen(address string) (net.Listener, error) {
+	log.Debugf("trying to listen to: %v", address)
+
+	//check for valid address
+	addr, err := pan.ResolveUDPAddr(address)
+	if err != nil {
+		return nil, err
+	}
+	log.Debugf("parsed: %v", addr)
+
 	tlsCfg := &tls.Config{
 		Certificates: quicutil.MustGenerateSelfSignedCert(),
 		NextProtos:   []string{"hello-quic"},
 	}
 	log.Debugf("tls set: %v", addr)
 
-	udpAddr, err := pan.ParseUDPAddr(addr)
-	if err != nil {
-		return nil, err
-	}
-	log.Debugf("parsed: %v", addr)
-
-	quicListener, err := pan.ListenQUIC(context.Background(), netaddr.IPPortFrom(udpAddr.IP, udpAddr.Port), nil, tlsCfg, nil)
+	quicListener, err := pan.ListenQUIC(context.Background(), netaddr.IPPortFrom(addr.IP, addr.Port), nil, tlsCfg, nil)
 	if err != nil {
 		return nil, err
 	}
