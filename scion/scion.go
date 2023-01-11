@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"net"
+	"time"
 
 	"github.com/netsec-ethz/scion-apps/pkg/pan"
 	"github.com/netsec-ethz/scion-apps/pkg/quicutil"
@@ -45,10 +46,21 @@ func SplitHostPort(hostport string) (host, port string, err error) {
 	return net.SplitHostPort(hostport)
 }
 
+// Wrapper for the function JoinHostPort
+// preserves the functionalty of the net.JoinHostPort function
+// TODO make code clean
+// TODO determine scion port behaviour
+func JoinHostPort(host, port string) string {
+	if _, ok := IsValidAddress(host); ok {
+		return host + ":8666"
+	}
+	return net.JoinHostPort(host, port)
+}
+
 // parse scion string into an ScionAddr with udp addresse and string address
 func ParseAddr(address string) (ScionAddr, error) {
 	saUDPAddress, err := pan.ResolveUDPAddr(address)
-	log.Debugf("Parsed: ", address, "into: ", saUDPAddress)
+	log.Debugf("You wanted me to parse...Parsed: %s", address)
 	if err != nil {
 		return ScionAddr{}, errors.New("could not parse scion address")
 	}
@@ -67,7 +79,7 @@ func IsValidAddress(address string) (pan.UDPAddr, bool) {
 }
 
 // return a connection for a scion
-// using quicutil from scion-apps
+// using quicutil from scion-appsd
 // SingleStream implements an opaque, bi-directional data stream using QUIC, intending to be a drop-in replacement for TCP
 func Dial(address string) (net.Conn, error) {
 	log.Debugf("dialing to: %v", address)
@@ -83,18 +95,24 @@ func Dial(address string) (net.Conn, error) {
 		InsecureSkipVerify: true,
 		NextProtos:         []string{"hello-quic"},
 	}
-	log.Debugf("tls set: %v", tlsCfg)
+	log.Debugf("tls set: %v", addr)
 
 	// create default selector TODO: create specific selector
-	selector := pan.NewDefaultSelector()
-	log.Debugf("selector set: %v", selector)
+	//selector := pan.NewDefaultSelector()
+	// selector
+	selector := &pan.PingingSelector{
+		Interval: 500 * time.Millisecond,
+		Timeout:  400 * time.Millisecond,
+	}
+	selector.SetActive(2)
+	log.Debugf("selector set: %v", addr)
 
 	//dial
 	session, err := pan.DialQUIC(context.Background(), netaddr.IPPort{}, addr, nil, selector, "", tlsCfg, nil)
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("dialed to: %v", session)
+	log.Debugf("dialed to: %v", addr)
 
 	//return drop-in replacement stream
 	ss, err := quicutil.NewSingleStream(session)

@@ -317,20 +317,11 @@ func removeDuplicateAddresses(addrs []string) []string {
 // normalizeAddress returns addr with the passed default port appended if
 // there is not already a port specified.
 func normalizeAddress(addr, defaultPort string) string {
-	if _, ok := scion.IsValidAddress(addr); ok {
-		// add 8666 port, which is the scion port
-		_, _, err := scion.SplitHostPort(addr)
-		if err != nil {
-			return addr + ":" + "8666"
-		}
-		return addr
-	} else {
-		_, _, err := scion.SplitHostPort(addr)
-		if err != nil {
-			return net.JoinHostPort(addr, defaultPort)
-		}
-		return addr
+	_, _, err := scion.SplitHostPort(addr)
+	if err != nil {
+		return scion.JoinHostPort(addr, defaultPort)
 	}
+	return addr
 }
 
 // normalizeAddresses returns a new slice with all the passed peer addresses

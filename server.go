@@ -3214,17 +3214,29 @@ func addrStringToNetAddr(addr string) (net.Addr, error) {
 // addLocalAddress adds an address that this node is listening on to the
 // address manager so that it may be relayed to peers.
 func addLocalAddress(addrMgr *addrmgr.AddrManager, addr string, services wire.ServiceFlag) error {
-	// as of now, we dont want to advertise our listening address
-	if _, ok := scion.IsValidAddress(addr); ok {
-		return nil
-	}
-
+	// split anyway, if scion or ip
 	host, portStr, err := scion.SplitHostPort(addr)
 	if err != nil {
 		return err
 	}
+
 	port, err := strconv.ParseUint(portStr, 10, 16)
 	if err != nil {
+		return err
+	}
+
+	// this part is probably optional/redundant, the if statment below might be false TODO:test
+	// the NetAddressV2 is not constructed bytewise, dirty
+	if _, ok := scion.IsValidAddress(addr); ok {
+		sa, _ := scion.ParseAddr(addr)
+
+		netAddr := &wire.NetAddressV2{
+			Timestamp: time.Now(),
+			Services:  services,
+			Addr:      sa,
+			Port:      uint16(port),
+		}
+		err := addrMgr.AddLocalAddress(netAddr, addrmgr.BoundPrio)
 		return err
 	}
 

@@ -130,6 +130,12 @@ func (na *NetAddressV2) ToLegacy() *NetAddress {
 	return legacyNa
 }
 
+// IsSCion returns a bool that signals to the caller whether or not this is a
+// scion address.
+func (na *NetAddressV2) IsScion() bool {
+	return na.Addr.Network() == "scion"
+}
+
 // IsTorV3 returns a bool that signals to the caller whether or not this is a
 // torv3 address.
 func (na *NetAddressV2) IsTorV3() bool {

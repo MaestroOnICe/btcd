@@ -228,6 +228,11 @@ func IsRoutable(na *wire.NetAddressV2) bool {
 		return true
 	}
 
+	if na.IsScion() {
+		// na is scion address, return true
+		return true
+	}
+
 	// Else na can be represented as a legacy NetAddress since i2p and
 	// cjdns are unsupported.
 	lna := na.ToLegacy()
