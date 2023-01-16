@@ -13,7 +13,6 @@ import (
 	"io"
 	"math/rand"
 	"net"
-	"reflect"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -305,14 +304,8 @@ func minUint32(a, b uint32) uint32 {
 
 // newNetAddress attempts to extract the IP address and port from the passed
 // net.Addr interface and create a bitcoin NetAddress structure using that
-// information.
+// information. No need to add a case for scion, we catch that case before calling this function, for now
 func newNetAddress(addr net.Addr, services wire.ServiceFlag) (*wire.NetAddress, error) {
-
-	fmt.Printf("SCION: newNetAddress %v %v\n", addr, reflect.TypeOf(addr))
-
-	// if scionAddr, ok := addr.(*pan.UDPAddr); ok {
-	// 	return &wire.
-	// }
 	// addr will be a net.TCPAddr when not using a proxy.
 	if tcpAddr, ok := addr.(*net.TCPAddr); ok {
 		ip := tcpAddr.IP
@@ -2325,7 +2318,7 @@ func (p *Peer) start() error {
 	return nil
 }
 
-// AssociateConnection associates the given conn to the peer.   Calling this
+// AssociateConnection associates the given conn to the peer. Calling this
 // function when the peer is already connected will have no effect.
 func (p *Peer) AssociateConnection(conn net.Conn) {
 	// Already connected?
@@ -2339,6 +2332,7 @@ func (p *Peer) AssociateConnection(conn net.Conn) {
 	if p.inbound {
 		p.addr = p.conn.RemoteAddr().String()
 
+		// quick way to catch all scion peers, we don not call the newNetAdress which would be a more sophisticated way
 		if sa, ok := p.conn.RemoteAddr().(pan.UDPAddr); ok {
 			p.na = &wire.NetAddressV2{
 				Timestamp: time.Now(),
