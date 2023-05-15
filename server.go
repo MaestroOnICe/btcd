@@ -1269,7 +1269,7 @@ func (sp *serverPeer) OnFilterLoad(_ *peer.Peer, msg *wire.MsgFilterLoad) {
 // manager.
 func (sp *serverPeer) OnGetAddr(_ *peer.Peer, msg *wire.MsgGetAddr) {
 	// Don't return any addresses when running on the simulation test
-	// network.  This helps prevent the network from becoming another
+	// network. This helps prevent the network from becoming another
 	// public test network since it will not be able to learn about other
 	// peers that have not specifically been provided.
 	if cfg.SimNet {
@@ -1295,7 +1295,7 @@ func (sp *serverPeer) OnGetAddr(_ *peer.Peer, msg *wire.MsgGetAddr) {
 
 	// Get the current known addresses from the address manager.
 	addrCache := sp.server.addrManager.AddressCache()
-
+	srvrLog.Debugf("THIS IS THE CURRENT ADDRESS: %v", addrCache)
 	// Push the addresses.
 	sp.pushAddrMsg(addrCache)
 }
