@@ -133,7 +133,7 @@ out:
 			hashesPerSec = (hashesPerSec + curHashesPerSec) / 2
 			totalHashes = 0
 			if hashesPerSec != 0 {
-				log.Debugf("Hash speed: %6.0f kilohashes/s",
+				log.Infof("Hash speed: %6.0f kilohashes/s",
 					hashesPerSec/1000)
 			}
 
@@ -147,7 +147,7 @@ out:
 	}
 
 	m.wg.Done()
-	log.Tracef("CPU miner speed monitor done")
+	log.Infof("CPU miner speed monitor done")
 }
 
 // submitBlock submits the passed block to network after ensuring it passes all
@@ -297,7 +297,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, blockHeight int32,
 //
 // It must be run as a goroutine.
 func (m *CPUMiner) generateBlocks(quit chan struct{}) {
-	log.Tracef("Starting generate blocks worker")
+	log.Infof("Starting generate blocks worker")
 
 	// Start a ticker which is used to signal checks for stale work and
 	// updates to the speed monitor.
@@ -318,6 +318,7 @@ out:
 		// transactions to work on when there are no connected peers.
 		if m.cfg.ConnectedCount() == 0 {
 			time.Sleep(time.Second)
+			log.Infof("Waiting for peers to connect before generating blocks")
 			continue
 		}
 
@@ -331,6 +332,7 @@ out:
 		if curHeight != 0 && !m.cfg.IsCurrent() {
 			m.submitBlockLock.Unlock()
 			time.Sleep(time.Second)
+			log.Infof("Waiting for chain to be synced before generating blocks")
 			continue
 		}
 
