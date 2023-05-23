@@ -1295,7 +1295,6 @@ func (sp *serverPeer) OnGetAddr(_ *peer.Peer, msg *wire.MsgGetAddr) {
 
 	// Get the current known addresses from the address manager.
 	addrCache := sp.server.addrManager.AddressCache()
-	srvrLog.Debugf("THIS IS THE CURRENT ADDRESS: %v", addrCache)
 	// Push the addresses.
 	sp.pushAddrMsg(addrCache)
 }

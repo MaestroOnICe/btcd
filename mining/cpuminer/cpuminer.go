@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/blockchain"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/mining"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcd/btcutil"
 )
 
 const (
@@ -109,7 +109,7 @@ type CPUMiner struct {
 // speedMonitor handles tracking the number of hashes per second the mining
 // process is performing.  It must be run as a goroutine.
 func (m *CPUMiner) speedMonitor() {
-	log.Tracef("CPU miner speed monitor started")
+	log.Infof("CPU miner speed monitor started")
 
 	var hashesPerSec float64
 	var totalHashes uint64
