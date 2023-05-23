@@ -297,7 +297,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, blockHeight int32,
 //
 // It must be run as a goroutine.
 func (m *CPUMiner) generateBlocks(quit chan struct{}) {
-	log.Infof("Starting generate blocks worker")
+	log.Tracef("Starting generate blocks worker")
 
 	// Start a ticker which is used to signal checks for stale work and
 	// updates to the speed monitor.
@@ -318,7 +318,6 @@ out:
 		// transactions to work on when there are no connected peers.
 		if m.cfg.ConnectedCount() == 0 {
 			time.Sleep(time.Second)
-			log.Infof("Waiting for peers to connect before generating blocks")
 			continue
 		}
 
@@ -332,7 +331,6 @@ out:
 		if curHeight != 0 && !m.cfg.IsCurrent() {
 			m.submitBlockLock.Unlock()
 			time.Sleep(time.Second)
-			log.Infof("Waiting for chain to be synced before generating blocks")
 			continue
 		}
 
@@ -386,7 +384,7 @@ func (m *CPUMiner) miningWorkerController() {
 	}
 
 	// Launch the current number of workers by default.
-	runningWorkers = make([]chan struct{}, 0, m.numWorkers)
+	runningWorkers = make([]chan struct{}, 0, 1)
 	launchWorkers(m.numWorkers)
 
 out:
