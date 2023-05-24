@@ -278,10 +278,10 @@ var MainNetParams = Params{
 	DNSSeeds:    []DNSSeed{},
 
 	// Chain parameters
-	GenesisBlock:             &genesisBlock,
-	GenesisHash:              &genesisHash,
-	PowLimit:                 mainPowLimit,
-	PowLimitBits:             0x1d00ffff,
+	GenesisBlock:             &simNetGenesisBlock,
+	GenesisHash:              &simNetGenesisHash,
+	PowLimit:                 simNetPowLimit,
+	PowLimitBits:             0x207fffff,
 	BIP0034Height:            227931, // 000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8
 	BIP0065Height:            388381, // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
 	BIP0066Height:            363725, // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
