@@ -59,7 +59,6 @@ func JoinHostPort(host, port string) string {
 // parse scion string into an ScionAddr with udp addresse and string address
 func ParseAddr(address string) (ScionAddr, error) {
 	saUDPAddress, err := pan.ResolveUDPAddr(address)
-	log.Debugf("You wanted me to parse...Parsed: %s", address)
 	if err != nil {
 		return ScionAddr{}, errors.New("could not parse scion address")
 	}
@@ -82,21 +81,18 @@ func IsValidAddress(address string) (pan.UDPAddr, bool) {
 // SingleStream implements an opaque, bi-directional data stream using QUIC, intending to be a drop-in replacement for TCP
 // We use SingleStream because it is a working drop-in which requires no futher code changes
 func Dial(address string) (net.Conn, error) {
-	log.Debugf("dialing to: %v", address)
 
 	// parse addr into a scionAddr
 	addr, err := pan.ResolveUDPAddr(address)
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("parsed: %v", addr)
 
-	// default, as in examples
+	// default tls, as in examples
 	tlsCfg := &tls.Config{
 		InsecureSkipVerify: true,
 		NextProtos:         []string{"hello-quic"},
 	}
-	log.Debugf("tls set: %v", addr)
 
 	// create pinging selector, which pings two paths
 	selector := &pan.PingingSelector{
@@ -107,14 +103,12 @@ func Dial(address string) (net.Conn, error) {
 	}
 	// enables active pinging on at most numActive paths.
 	selector.SetActive(2)
-	log.Debugf("selector set: %v", addr)
 
 	//dial
 	session, err := pan.DialQUIC(context.Background(), netaddr.IPPort{}, addr, nil, selector, "", tlsCfg, nil)
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("dialed to: %v", addr)
 
 	//return drop-in replacement stream
 	ss, err := quicutil.NewSingleStream(session)
@@ -129,25 +123,23 @@ func Dial(address string) (net.Conn, error) {
 // SingleStreamListener is a wrapper for a quic.Listener, returning SingleStream connections from Accept
 // This allows to use quic in contexts where a (TCP-)net.Listener is expected.
 func Listen(address string) (net.Listener, error) {
-	log.Debugf("trying to listen to: %v", address)
 
 	//check for valid address
 	addr, err := pan.ResolveUDPAddr(address)
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("parsed: %v", addr)
 
+	// default tls, as in examples
 	tlsCfg := &tls.Config{
 		Certificates: quicutil.MustGenerateSelfSignedCert(),
 		NextProtos:   []string{"hello-quic"},
 	}
-	log.Debugf("tls set: %v", addr)
 
+	// listen
 	quicListener, err := pan.ListenQUIC(context.Background(), netaddr.IPPortFrom(addr.IP, addr.Port), nil, tlsCfg, nil)
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("listening to: %v", addr)
 	return quicutil.SingleStreamListener{Listener: quicListener}, nil
 }
