@@ -177,12 +177,12 @@ type config struct {
 	Whitelists           []string      `long:"whitelist" description:"Add an IP network or IP that will not be banned. (eg. 192.168.1.0/24 or ::1)"`
 	lookup               func(string) ([]net.IP, error)
 	oniondial            func(string, string, time.Duration) (net.Conn, error)
+	sciondial            func(string, string, time.Duration) (net.Conn, error)
 	dial                 func(string, string, time.Duration) (net.Conn, error)
 	addCheckpoints       []chaincfg.Checkpoint
 	miningAddrs          []btcutil.Address
 	minRelayTxFee        btcutil.Amount
 	whitelists           []*net.IPNet
-	sciondial            func(string, string, time.Duration) (net.Conn, error)
 }
 
 // serviceOptions defines the configuration options for the daemon as a service on
