@@ -4,7 +4,7 @@ btcd is an alternative full node bitcoin implementation written in Go (golang).
 
 This is a [SCION](https://github.com/scionproto/scion) compatible version of the [btcd](https://github.com/btcsuite/btcd) implementation.
 
-It is *NOT compatible*, I repeat *NOT compatible* with the official mainnet of the Bitcoin Network.
+It is *NOT compatible*, I repeat *NOT compatible*, with the official mainnet of the Bitcoin Network.
 
 This client implementation is used to experiment within the [SEED Emulator](https://github.com/seed-labs/seed-emulator).
 
