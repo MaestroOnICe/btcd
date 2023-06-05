@@ -287,9 +287,9 @@ var MainNetParams = Params{
 	BIP0066Height:            363725, // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
 	CoinbaseMaturity:         100,
 	SubsidyReductionInterval: 210000,
-	TargetTimespan:           time.Hour * 24 * 14, // 14 days
-	TargetTimePerBlock:       time.Minute * 10,    // 10 minutes
-	RetargetAdjustmentFactor: 4,                   // 25% less, 400% more
+	TargetTimespan:           time.Second * 1210,     // mod= 20.16 minutes, that is a 1/1000 of original = 14 day (time.Hour * 24 * 14)
+	TargetTimePerBlock:       time.Millisecond * 600, // mod= 0,6 seconds, that is a 1/1000 of original = 10 minute (time.Minute * 10)
+	RetargetAdjustmentFactor: 4,                      // 25% less, 400% more
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0,
 	GenerateSupported:        true,
