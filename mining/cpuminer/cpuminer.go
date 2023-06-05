@@ -387,6 +387,7 @@ func (m *CPUMiner) miningWorkerController() {
 	// Launch the current number of workers by default.
 	runningWorkers = make([]chan struct{}, 0, m.numWorkers)
 	launchWorkers(m.numWorkers)
+	log.Infof("Launched # number of worker(s) %v", m.NumWorkers())
 
 out:
 	for {
