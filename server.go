@@ -1295,6 +1295,11 @@ func (sp *serverPeer) OnGetAddr(_ *peer.Peer, msg *wire.MsgGetAddr) {
 	// Get the current known addresses from the address manager.
 	addrCache := sp.server.addrManager.AddressCache()
 
+	peerLog.Debug("length of addressCache: %d", len(addrCache))
+	for _, addr := range addrCache {
+		peerLog.Debugf("AddressCache: %v", addr.Addr)
+	}
+
 	// Push the addresses.
 	sp.pushAddrMsg(addrCache)
 }
@@ -1364,6 +1369,7 @@ func (sp *serverPeer) OnAddrV2(_ *peer.Peer, msg *wire.MsgAddrV2) {
 		return
 	}
 
+	peerLog.Debugf("OnAddrV2 invokes")
 	// An empty AddrV2 message is invalid.
 	if len(msg.AddrList) == 0 {
 		peerLog.Errorf("Command [%s] from %s does not contain any "+
@@ -1373,6 +1379,7 @@ func (sp *serverPeer) OnAddrV2(_ *peer.Peer, msg *wire.MsgAddrV2) {
 	}
 
 	for _, na := range msg.AddrList {
+		peerLog.Debugf("AddrV2 received: %v", na.Addr)
 		// Don't add more to the set of known addresses if we're
 		// disconnecting.
 		if !sp.Connected() {

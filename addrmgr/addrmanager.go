@@ -666,22 +666,23 @@ func (a *AddrManager) NeedMoreAddresses() bool {
 // read-only (but since it is a copy now, this is not as dangerous).
 func (a *AddrManager) AddressCache() []*wire.NetAddressV2 {
 	allAddr := a.getAddresses()
+	return allAddr
 
-	numAddresses := len(allAddr) * getAddrPercent / 100
-	if numAddresses > getAddrMax {
-		numAddresses = getAddrMax
-	}
+	// 	numAddresses := len(allAddr) * getAddrPercent / 100
+	// 	if numAddresses > getAddrMax {
+	// 		numAddresses = getAddrMax
+	// 	}
 
-	// Fisher-Yates shuffle the array. We only need to do the first
-	// `numAddresses' since we are throwing the rest.
-	for i := 0; i < numAddresses; i++ {
-		// pick a number between current index and the end
-		j := rand.Intn(len(allAddr)-i) + i
-		allAddr[i], allAddr[j] = allAddr[j], allAddr[i]
-	}
+	// 	// Fisher-Yates shuffle the array. We only need to do the first
+	// 	// `numAddresses' since we are throwing the rest.
+	// 	for i := 0; i < numAddresses; i++ {
+	// 		// pick a number between current index and the end
+	// 		j := rand.Intn(len(allAddr)-i) + i
+	// 		allAddr[i], allAddr[j] = allAddr[j], allAddr[i]
+	// 	}
 
-	// slice off the limit we are willing to share.
-	return allAddr[0:numAddresses]
+	// 	// slice off the limit we are willing to share.
+	// 	return allAddr[0:numAddresses]
 }
 
 // getAddresses returns all of the addresses currently found within the
