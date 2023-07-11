@@ -282,14 +282,14 @@ var MainNetParams = Params{
 	GenesisHash:              &simNetGenesisHash,
 	PowLimit:                 simNetPowLimit,
 	PowLimitBits:             0x207fffff,
-	BIP0034Height:            227931, // 000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8
-	BIP0065Height:            388381, // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
-	BIP0066Height:            363725, // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
+	BIP0034Height:            0, // 000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8
+	BIP0065Height:            0, // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
+	BIP0066Height:            0, // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
 	CoinbaseMaturity:         100,
 	SubsidyReductionInterval: 210000,
-	TargetTimespan:           time.Second * 1210,     // mod= 20.16 minutes, that is a 1/1000 of original = 14 day (time.Hour * 24 * 14)
-	TargetTimePerBlock:       time.Millisecond * 600, // mod= 0,6 seconds, that is a 1/1000 of original = 10 minute (time.Minute * 10)
-	RetargetAdjustmentFactor: 4,                      // 25% less, 400% more
+	TargetTimespan:           time.Minute * 10,
+	TargetTimePerBlock:       time.Minute * 1,
+	RetargetAdjustmentFactor: 4, // 25% less, 400% more
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0,
 	GenerateSupported:        true,
