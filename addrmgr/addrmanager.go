@@ -1058,10 +1058,17 @@ func getReachabilityFrom(localAddr, remoteAddr *wire.NetAddressV2) int {
 		Ipv4
 		Ipv6Strong
 		Private
+		Scion
 	)
 
 	if !IsRoutable(remoteAddr) {
 		return Unreachable
+	}
+
+	if remoteAddr.IsScion() {
+		if localAddr.IsScion() {
+			return Scion
+		}
 	}
 
 	if remoteAddr.IsTorV3() {
