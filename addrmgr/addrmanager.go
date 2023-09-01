@@ -785,7 +785,7 @@ func (a *AddrManager) HostToNetAddress(host string, port uint16,
 func NetAddressKey(na *wire.NetAddressV2) string {
 	port := strconv.FormatUint(uint64(na.Port), 10)
 
-	return net.JoinHostPort(na.Addr.String(), port)
+	return scion.JoinHostPort(na.Addr.String(), port)
 }
 
 // GetAddress returns a single address that should be routable.  It picks a
