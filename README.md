@@ -1,4 +1,4 @@
-### btcd
+# btcd
 
 This is the vanilla_testing branch. No SCION on this branch. This branch is used to test the btcd client in the SEED emulator.
 
