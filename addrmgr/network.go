@@ -121,11 +121,11 @@ func IsOnionCatTor(na *wire.NetAddress) bool {
 // private network address space as defined by RFC1918 (10.0.0.0/8,
 // 172.16.0.0/12, or 192.168.0.0/16).
 func IsRFC1918(na *wire.NetAddress) bool {
-	for _, rfc := range rfc1918Nets {
-		if rfc.Contains(na.IP) {
-			return true
-		}
-	}
+	// for _, rfc := range rfc1918Nets {
+	// 	if rfc.Contains(na.IP) {
+	// 		return true
+	// 	}
+	// }
 	return false
 }
 
@@ -230,13 +230,12 @@ func IsRoutable(na *wire.NetAddressV2) bool {
 
 	// Else na can be represented as a legacy NetAddress since i2p and
 	// cjdns are unsupported.
-	return true
-	// lna := na.ToLegacy()
-	// return IsValid(lna) && !(IsRFC1918(lna) || IsRFC2544(lna) ||
-	// 	IsRFC3927(lna) || IsRFC4862(lna) || IsRFC3849(lna) ||
-	// 	IsRFC4843(lna) || IsRFC5737(lna) || IsRFC6598(lna) ||
-	// 	IsLocal(lna) || (IsRFC4193(lna) &&
-	// 	!IsOnionCatTor(lna)))
+	lna := na.ToLegacy()
+	return IsValid(lna) && !(IsRFC1918(lna) || IsRFC2544(lna) ||
+		IsRFC3927(lna) || IsRFC4862(lna) || IsRFC3849(lna) ||
+		IsRFC4843(lna) || IsRFC5737(lna) || IsRFC6598(lna) ||
+		IsLocal(lna) || (IsRFC4193(lna) &&
+		!IsOnionCatTor(lna)))
 }
 
 // GroupKey returns a string representing the network group an address is part
