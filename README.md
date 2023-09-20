@@ -13,6 +13,7 @@ This is the vanilla_testing branch. No SCION on this branch. This branch is used
 - allowing RFC 1918 ipv4 address (e.g. 10.0.0.0/8) becaus this is the default addressing scheme in SEED
 - AddressCache returns addresses without fisher-yates shuffle
   - this caused problems with a few participants in the network, returned an empty slice
+- AddressCache is dumped to disk every minute
 
 ## License
 
