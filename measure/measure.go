@@ -14,10 +14,10 @@ import (
 )
 
 type Datapoint struct {
-	BlockHash       string `json:"hash"`
-	BlockCount      int64  `json:"blockCount"`
-	ConnectionCount int64  `json:"connectionCount"`
-	TimeElapsed     string `json:"timeElapsed"`
+	BlockHash       string  `json:"hash"`
+	BlockCount      int64   `json:"blockCount"`
+	ConnectionCount int64   `json:"connectionCount"`
+	TimeElapsed     float64 `json:"timeElapsed"`
 }
 
 type DataContainer struct {
@@ -73,7 +73,7 @@ func main() {
 	// Start a loop that runs every 10 seconds
 	for {
 		// Calculate the time elapsed since the first loop iteration
-		timeElapsed := time.Since(startTime).String()
+		timeElapsed := time.Since(startTime).Seconds()
 
 		newestBlockHash, err := client.GetBestBlockHash()
 		if err != nil {
