@@ -1,24 +1,20 @@
 # btcd
 
-btcd is an alternative full node bitcoin implementation written in Go (golang).
+This is the mvp testing branch. SCION on this branch. This branch is used to test the btcd client in the SEED emulator with a SCION Connection.
 
-This is a [SCION](https://github.com/scionproto/scion) compatible version of the [btcd](https://github.com/btcsuite/btcd) implementation.
+## Changes
 
-It is *NOT compatible*, I repeat *NOT compatible*, with the official mainnet of the Bitcoin Network.
+- connmanager debug messages disabled for visibility
+  - lines 210-212, 296 and 350-351
+- checkpoints for "mainnet" deletes because this an enclosed "new" mainnet
+- CPU mining support enabled on mainnet
+- uses the simnet genesis block
+- no DNS seeding
+- allowing RFC 1918 ipv4 address (e.g. 10.0.0.0/8) becaus this is the default addressing scheme in SEED
+- AddressCache returns addresses without fisher-yates shuffle
+  - this caused problems with a few participants in the network, returned an empty slice
+- AddressCache is dumped to disk every minute
 
-This client implementation is used to experiment within the [SEED Emulator](https://github.com/seed-labs/seed-emulator).
+## SCION changes
 
-## What changed have been done?
-
-- SCION compatibility is enabled (scion.go inf scion dir)
-  - dial and listen is done with [pan](https://github.com/netsec-ethz/scion-apps)
-- CPU mining is enabled on our own "mainnet"
-  - for this to work some of the mainnet parameters like the genesis block or checkpoint are deleted
-
-## Requirements
-
-[Go](http://golang.org) 1.16 or newer.
-
-## License
-
-btcd is licensed under the [copyfree](http://copyfree.org) ISC License.
+-
