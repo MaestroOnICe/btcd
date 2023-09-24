@@ -14,10 +14,11 @@ import (
 )
 
 type Datapoint struct {
-	BlockHash       string  `json:"hash"`
-	BlockCount      int64   `json:"blockCount"`
-	ConnectionCount int64   `json:"connectionCount"`
-	TimeElapsed     float64 `json:"timeElapsed"`
+	BlockHash       string   `json:"hash"`
+	BlockCount      int64    `json:"blockCount"`
+	ConnectionCount int64    `json:"connectionCount"`
+	TimeElapsed     float64  `json:"timeElapsed"`
+	ConnectedPeers  []string `json:"connectedPeers"`
 }
 
 type DataContainer struct {
@@ -40,6 +41,7 @@ func main() {
 		},
 	}
 
+	log.Println("Registered the notification handler")
 	// Connect to local btcd RPC server using websockets.
 	btcdHomeDir := btcutil.AppDataDir("btcd", false)
 	certs, err := ioutil.ReadFile(filepath.Join(btcdHomeDir, "rpc.cert"))
@@ -57,6 +59,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println("Connected to RPC server")
 
 	// Register for block connect and disconnect notifications.
 	if err := client.NotifyBlocks(); err != nil {
@@ -74,6 +77,12 @@ func main() {
 	for {
 		// Calculate the time elapsed since the first loop iteration
 		timeElapsed := time.Since(startTime).Seconds()
+
+		// newBlockHash, err := client.Generate(1)
+		// if err != nil {
+		// 	print(err, newBlockHash)
+		// 	return
+		// }
 
 		newestBlockHash, err := client.GetBestBlockHash()
 		if err != nil {
@@ -93,10 +102,16 @@ func main() {
 			return
 		}
 
-		// datapoint.ConnectionCount = connectionCount
-		// // datapoint.BlockHash = newestBlockHash.String()
-		// datapoint.TimeElapsed = timeElapsed
-		// datapoint.BlockCount = blockCount
+		peerJSON, err := client.GetPeerInfo()
+		if err != nil {
+			print(err)
+			return
+		}
+
+		connectedPeers := []string{}
+		for _, peers := range peerJSON {
+			connectedPeers = append(connectedPeers, peers.Addr)
+		}
 
 		// create data point
 		newDatapoint := Datapoint{
@@ -104,9 +119,12 @@ func main() {
 			BlockCount:      blockCount,
 			ConnectionCount: connectionCount,
 			TimeElapsed:     timeElapsed,
+			ConnectedPeers:  connectedPeers,
 		}
 		dataContainer.Data = append(dataContainer.Data, newDatapoint)
 
+		log.Println("Writing datapoint to JSON")
+		print(timeElapsed)
 		// Write data to the JSON file
 		if err := writeDataToFile(dataContainer, "/root/.btcd/logs/mainnet/log.json"); err != nil {
 			log.Printf("Error writing data to file: %v", err)
